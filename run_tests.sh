@@ -1,28 +1,7 @@
 #!/bin/bash
 
-NODE_TOTAL=$CIRCLE_NODE_TOTAL
-NODE_INDEX=$CIRCLE_NODE_INDEX
-
-i=0
-docker_images=(
-    'openstudio-1.8.1-mongo-2.4'
-    'openstudio-1.8.5-mongo-2.4'
-)
-
-docker_split=()
-for image in ${docker_images[@]}
-do
-  if [ $(($i % ${NODE_TOTAL})) -eq ${NODE_INDEX} ]
-  then
-    docker_split+=${image}
-
-    #test=`basename $file | sed -e "s/.java//"`
-    #tests+="${test},"
-  fi
-  ((i++))
-done
-
-# copy all the files into a new test directory because they will clobber each other in parallel
+# Main function to run the container.
+# Copy all the files into a new test directory because they will clobber each other in parallel
 function run_docker {
   echo "Running Docker container for $image"
   echo "Copying the files to a new test directory"
@@ -32,9 +11,33 @@ function run_docker {
 
   echo "Executing the docker command"
   docker run -v $(pwd):/var/simdata/openstudio nrel/docker-test-containers:$image /var/simdata/openstudio/docker-run.sh
+
+  echo "Syncing results"
 }
 
-for image in ${docker_split[@]}
+
+## Script Start ##
+
+i=0
+
+# List any tags that you want to test of the Docker image. These must be able to be made into directories
+docker_tags=(
+    'openstudio-1.8.1-mongo-2.4'
+    'openstudio-1.8.5-mongo-2.4'
+)
+
+# Iterate over the tags and put them into groups based on the Circle CI Node Index.
+images=()
+for tag in ${docker_tags[@]}
+do
+  if [ $(($i % $CIRCLE_NODE_TOTAL)) -eq $CIRCLE_NODE_INDEX ]
+  then
+    images+=${tag}
+  fi
+  ((i++))
+done
+
+for image in ${images[@]}
 do
   run_docker
 done
