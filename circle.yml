@@ -7,5 +7,5 @@ dependencies:
 
 test:
   override:
-    - run_tests.sh:
+    - ./run_tests.sh:
         parallel: true
