@@ -7,6 +7,9 @@ dependencies:
 
 test:
   override:
+    - run_tests.sh:
+    parallel: true
+
     - >
       docker run -v $(pwd):/var/simdata/openstudio
       nrel/docker-test-containers:openstudio-1.8.1-mongo-2.4 /var/simdata/openstudio/docker-run.sh
